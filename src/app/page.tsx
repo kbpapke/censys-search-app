@@ -1,5 +1,5 @@
-import CensysSearch from "@/components/CensysSearch";
-import { CredentialsWarning } from '@/components/CredentialsWarning';
+import CensysSearch from "../components/CensysSearch";
+import { CredentialsWarning } from '../components/CredentialsWarning';
 
 export default function Home() {
   return (
