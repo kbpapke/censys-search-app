@@ -118,5 +118,6 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## TODO Nice To Have
+## TODOs
+- Debug pagination - network request is successful with new parameters, page counts and results ranges are updated, however, the main results list seems to have the same data
 - Persist search settings - link to search page with query parameters
