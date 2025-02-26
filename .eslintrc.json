@@ -1,0 +1,28 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "react/no-unescaped-entities": [
+      "error",
+      {
+        "forbid": [
+          {
+            "char": ">",
+            "alternatives": ["&gt;"]
+          },
+          {
+            "char": "}",
+            "alternatives": ["&#125;"]
+          },
+          {
+            "char": "\"",
+            "alternatives": ["&quot;", "&ldquo;", "&#34;", "&rdquo;"]
+          },
+          {
+            "char": "'",
+            "alternatives": ["&apos;", "&lsquo;", "&#39;", "&rsquo;"]
+          }
+        ]
+      }
+    ]
+  }
+}
