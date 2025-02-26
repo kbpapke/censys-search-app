@@ -19,15 +19,26 @@ const CensysSearch = () => {
 
   // Auto-load results on first render
   useEffect(() => {
-    // This is intentionally empty to trigger the query on component mount
+    // Component mounted - intentionally left empty
   }, []);
 
-  const { data, isLoading, isError, error, isFetching } = useQuery({
-    queryKey: ['hosts', searchParams],
-    queryFn: () => searchHosts(searchParams),
+  // Keep track of search params changes
+  useEffect(() => {
+    // Search params changed
+  }, [searchParams]);
+
+  const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
+    // Make query key specific to each search and page request
+    queryKey: ['hosts', searchParams.query, searchParams.page, searchParams.per_page],
+    queryFn: () => {
+      // Execute query with search params
+      return searchHosts(searchParams);
+    },
     // Always enabled to load initial results
     enabled: true,
-    staleTime: 60000, // Cache results for 1 minute
+    staleTime: 30000, // Cache results for 30 seconds
+    gcTime: 60000, // Keep in cache for 1 minute
+    refetchOnWindowFocus: false,
   });
 
   const handleSearch = (params: CensysSearchParams) => {
@@ -39,18 +50,28 @@ const CensysSearch = () => {
   };
 
   const handleNextPage = () => {
-    setSearchParams(prev => ({
-      ...prev,
-      page: (prev.page || 1) + 1,
-    }));
+    setSearchParams(prev => {
+      const newParams = {
+        ...prev,
+        page: (prev.page || 1) + 1,
+      };
+      return newParams;
+    });
+    // Force refetch when page changes
+    setTimeout(() => refetch(), 0);
   };
 
   const handlePrevPage = () => {
     if ((searchParams.page || 1) > 1) {
-      setSearchParams(prev => ({
-        ...prev,
-        page: (prev.page || 1) - 1,
-      }));
+      setSearchParams(prev => {
+        const newParams = {
+          ...prev,
+          page: (prev.page || 1) - 1,
+        };
+        return newParams;
+      });
+      // Force refetch when page changes
+      setTimeout(() => refetch(), 0);
     }
   };
 
@@ -137,7 +158,10 @@ const CensysSearch = () => {
           </div>
           
           {/* Results list */}
-          <HostsList hosts={data.result.hits} />
+          <HostsList 
+            key={`hosts-page-${searchParams.page}`} 
+            hosts={data.result.hits} 
+          />
           
           {/* Pagination */}
           <div className="flex justify-between mt-6">
