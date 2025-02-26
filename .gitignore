@@ -40,7 +40,6 @@ yarn-error.log*
 .env.production.local
 
 # secrets
-*credential*
 *secret*
 *password*
 *token*
