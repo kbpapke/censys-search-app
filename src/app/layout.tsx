@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GeistSans, GeistMono } from '@vercel/font';
+import { Geist as GeistSans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
 
@@ -8,7 +8,7 @@ const geistSans = GeistSans({
   subsets: ["latin"],
 });
 
-const geistMono = GeistMono({
+const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
