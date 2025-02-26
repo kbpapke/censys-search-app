@@ -1,5 +1,5 @@
 import CensysSearch from "@/components/CensysSearch";
-import ApiCredentialsWarning from "@/components/ApiCredentialsWarning";
+import { ApiCredentialsWarning } from "@/components/ApiCredentialsWarning";
 
 export default function Home() {
   return (
