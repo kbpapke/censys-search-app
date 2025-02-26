@@ -1,5 +1,5 @@
-import CensysSearch from "../components/CensysSearch";
-import { CredentialsWarning } from "../components/CredentialsWarning";
+import CensysSearch from "@/components/CensysSearch";
+import ApiCredentialsWarning from "@/components/ApiCredentialsWarning";
 
 export default function Home() {
   return (
@@ -12,7 +12,7 @@ export default function Home() {
       </header>
 
       <main className="py-8">
-        <CredentialsWarning />
+        <ApiCredentialsWarning />
         <CensysSearch />
       </main>
 

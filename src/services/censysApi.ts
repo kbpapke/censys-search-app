@@ -96,16 +96,19 @@ export const searchHosts = async ({
   fields,
   useSampleData = false
 }: CensysSearchParams): Promise<CensysSearchResult> => {
-  // Skip logging to avoid build issues
+  console.log('Searching with credentials:', Boolean(apiId), Boolean(secretKey));
   
   // If using sample data is explicitly requested, return it immediately
   if (useSampleData) {
+    console.log('Using sample data');
     return formatSampleData(query, page, per_page);
   }
   
   // Use passed credentials first, fall back to config
   const finalApiId = apiId || censysConfig.API_ID;
   const finalSecretKey = secretKey || censysConfig.SECRET_KEY;
+  
+  console.log('Final credentials exist:', Boolean(finalApiId), Boolean(finalSecretKey));
   
   if (!finalApiId || !finalSecretKey) {
     throw new Error('Censys API credentials are not configured. Please set NEXT_PUBLIC_CENSYS_API_ID and NEXT_PUBLIC_CENSYS_SECRET_KEY in your environment variables.');
@@ -127,7 +130,7 @@ export const searchHosts = async ({
       auth: {
         username: finalApiId,
         password: finalSecretKey,
-      }
+      },
     });
 
     // Make sure response.data contains links property, even if API doesn't return it
