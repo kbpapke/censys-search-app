@@ -70,6 +70,41 @@ For more information about the Censys API, visit the [Censys API Documentation](
 - Tailwind CSS for styling
 - Jest and React Testing Library for testing
 
+## Using the Application
+
+### Search Functionality
+
+The application allows you to search for IPv4 hosts using Censys query syntax. Here's how to use the search feature:
+
+1. Enter a search query in the search box. Here are some example queries:
+   - `services.service_name: HTTP` - Find hosts running HTTP services
+   - `ip: 8.8.8.8` - Look up a specific IP address
+   - `services.port: 443 AND services.service_name: HTTPS` - Find hosts with HTTPS on port 443
+   - `autonomous_system.name: "Google"` - Find hosts in Google's autonomous system
+
+2. Use the pagination controls at the bottom of the results to navigate between pages.
+
+3. Click on an IP address in the results to view more detailed information.
+
+### Search Options
+
+The Censys API supports several search options that can be added to your query:
+
+- **Basic Filters**:
+  - `services.port: 22` - Filter by port number
+  - `services.service_name: SSH` - Filter by service name
+  - `location.country: US` - Filter by country
+  - `autonomous_system.name: "Amazon"` - Filter by AS name
+
+- **Combining Filters**:
+  - Use `AND`, `OR`, and parentheses to create complex queries
+  - Example: `services.port: 80 AND (location.country: US OR location.country: CA)`
+
+- **Advanced Queries**:
+  - Exclusions with `NOT`: `services.port: 80 AND NOT location.country: US`
+  - Range searches: `services.port: [8000 TO 9000]`
+
+
 ## Running Tests
 
 The application uses Jest and React Testing Library for testing. Tests cover components, API services, and utility functions.
