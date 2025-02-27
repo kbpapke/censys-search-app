@@ -1,6 +1,5 @@
 // This module handles the communication with the Censys API
 import axios from 'axios';
-import { censysConfig } from '@/config/env';
 import sampleData from '@/data/sampleData.json';
 import base64 from 'base-64';
 
@@ -105,20 +104,16 @@ const generateMockCursor = (direction: 'next' | 'prev', query: string, currentIn
 
 // Helper function to extract a subset of sample data for a specific page
 export const formatSampleData = (query: string, per_page: number = 10, cursor: string | null = null): CensysSearchResult => {
-  console.log('[API DEBUG] Formatting sample data with cursor:', cursor);
-  
-  // Parse and decode cursor to determine page index (in a real implementation, this would be done differently)
+  // Parse and decode cursor to determine page index
   let currentIndex = 0;
   if (cursor) {
     try {
-      // In a real implementation, this would properly decode the cursor
-      // Here we're just doing a simple mock parse
       const cursorParts = cursor.split('_');
       if (cursorParts.length > 1) {
         currentIndex = parseInt(cursorParts[1], 10);
       }
-    } catch (e) {
-      console.error('Error parsing cursor:', e);
+    } catch {
+      // Silently fail if cursor can't be decoded
     }
   }
   
@@ -144,8 +139,6 @@ export const formatSampleData = (query: string, per_page: number = 10, cursor: s
     next: hasNext ? generateMockCursor('next', query, currentIndex) : ''
   };
   
-  console.log('[API DEBUG] Generated sample data with links:', sampleResult.result.links);
-  
   return sampleResult;
 };
 
@@ -157,14 +150,13 @@ export const extractCursorInfo = (cursor: string | null): {page?: number, direct
     const parts = cursor.split('.');
     if (parts.length > 1) {
       const payload = JSON.parse(base64.decode(parts[1]));
-      console.log('[API DEBUG] Extracted cursor info:', JSON.stringify(payload));
       return {
         page: payload.page,
         direction: payload.reversed ? 'backward' : 'forward'
       };
     }
-  } catch (err) {
-    console.log('[API DEBUG] Could not decode cursor payload (likely not JWT format)');
+  } catch {
+    // Silently fail if cursor can't be decoded
   }
   
   return {};
@@ -181,20 +173,13 @@ export const searchHosts = async ({
   fields,
   useSampleData = false
 }: CensysSearchParams): Promise<CensysSearchResult> => {
-  console.log('Searching with credentials:', Boolean(apiId), Boolean(secretKey));
-  console.log('Pagination params:', { cursor, per_page });
-  
   // If using sample data is explicitly requested, return it immediately
   if (useSampleData) {
-    console.log('Using sample data');
     return formatSampleData(query, per_page, cursor);
   }
   
-  // Use passed credentials first, fall back to config
-  const finalApiId = apiId || censysConfig.API_ID;
-  const finalSecretKey = secretKey || censysConfig.SECRET_KEY;
-  
-  if (!finalApiId || !finalSecretKey) {
+  // Check API credentials
+  if (!apiId || !secretKey) {
     throw new Error('Censys API credentials are not configured. Please set NEXT_PUBLIC_CENSYS_API_ID and NEXT_PUBLIC_CENSYS_SECRET_KEY in your environment variables.');
   }
 
@@ -203,30 +188,14 @@ export const searchHosts = async ({
     const formattedQuery = formatQueryField(query.trim());
     
     // Prepare request params
-    const params: Record<string, any> = {
+    const params: Record<string, string | number | boolean> = {
       q: formattedQuery,
       per_page,
     };
     
     // Add cursor if it exists and is not null
-    // IMPORTANT: Only add the cursor if it's a valid string (not null, undefined, or empty string)
     if (cursor && cursor !== 'next' && cursor !== '') {
-      console.log('[API DEBUG] Using cursor for pagination:', cursor);
-      
-      // Debug the cursor structure (safely)
-      try {
-        const parts = cursor.split('.');
-        if (parts.length > 1) {
-          const payload = JSON.parse(base64.decode(parts[1]));
-          console.log('[API DEBUG] Cursor decoded payload:', JSON.stringify(payload));
-        }
-      } catch (err) {
-        console.log('[API DEBUG] Could not decode cursor payload (likely not JWT format)');
-      }
-      
       params.cursor = cursor;
-    } else {
-      console.log('[API DEBUG] No valid cursor provided, first page of results');
     }
     
     // Add other optional parameters
@@ -234,37 +203,22 @@ export const searchHosts = async ({
     if (sort) params.sort = sort;
     if (fields && fields.length > 0) params.fields = fields.join(',');
     
-    console.log('[API DEBUG] Final request params:', params);
-    
     const response = await axios.get('https://search.censys.io/api/v2/hosts/search', {
       params,
       auth: {
-        username: finalApiId,
-        password: finalSecretKey,
+        username: apiId,
+        password: secretKey,
       },
     });
 
-    // Log the full response structure to understand what's available
-    console.log('[API DEBUG] Response structure:', JSON.stringify(response.data).substring(0, 500));
-    
-    // Log the cursor information from the actual response structure
-    if (response.data?.result?.links) {
-      console.log('[API DEBUG] Found cursor tokens in result.links:', response.data.result.links);
-    } else {
-      console.log('[API DEBUG] No cursor tokens found in API response');
-    }
-
     return response.data;
   } catch (error) {
-    console.error('Error searching Censys API:', error);
-    
     // Handle specific API errors
     if (axios.isAxiosError(error) && error.response) {
       const status = error.response.status;
       const errorData = error.response.data;
       
       if (status === 422) {
-        console.error('Invalid query parameters:', errorData);
         throw new Error(`Invalid query parameters: ${errorData?.error || 'Please check your search query format'}`);
       } else if (status === 401) {
         throw new Error('Invalid Censys API credentials. Please check your API ID and Secret Key.');

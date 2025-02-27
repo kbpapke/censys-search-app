@@ -96,10 +96,6 @@ The Censys API supports several search options that can be added to your query:
   - `location.country: US` - Filter by country
   - `autonomous_system.name: "Amazon"` - Filter by AS name
 
-- **Combining Filters**:
-  - Use `AND`, `OR`, and parentheses to create complex queries
-  - Example: `services.port: 80 AND (location.country: US OR location.country: CA)`
-
 - **Advanced Queries**:
   - Exclusions with `NOT`: `services.port: 80 AND NOT location.country: US`
   - Range searches: `services.port: [8000 TO 9000]`

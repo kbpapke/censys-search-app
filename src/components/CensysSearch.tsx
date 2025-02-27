@@ -6,8 +6,6 @@ import { searchHosts, CensysSearchParams, DEFAULT_QUERY, extractCursorInfo } fro
 import SearchForm from './SearchForm';
 import HostsList from './HostsList';
 
-
-
 const CensysSearch = () => {
   const [searchParams, setSearchParams] = useState<CensysSearchParams>({
     query: DEFAULT_QUERY,
@@ -17,7 +15,6 @@ const CensysSearch = () => {
     secretKey: process.env.NEXT_PUBLIC_CENSYS_SECRET_KEY
   });
 
-  // Track current navigation state
   const [navigationState, setNavigationState] = useState<{
     direction: 'initial' | 'forward' | 'backward';
     pages: number;
@@ -26,38 +23,15 @@ const CensysSearch = () => {
     pages: 0
   });
 
-  // Auto-load results on first render
-  useEffect(() => {
-    // This is intentionally empty to trigger the query on component mount
-  }, []);
+  // Empty useEffect to trigger initial query on component mount
+  useEffect(() => {}, []);
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['hosts', searchParams],
-    queryFn: () => {
-      console.log('Executing search with params:', JSON.stringify(searchParams));
-      return searchHosts(searchParams);
-    },
-    // Always enabled to load initial results
+    queryFn: () => searchHosts(searchParams),
     enabled: true,
     staleTime: 60000, // Cache results for 1 minute
   });
-
-  // Log data changes
-  useEffect(() => {
-    if (data) {
-      console.log('[UI DEBUG] Received data from API:', data);
-      
-      // Check for cursor tokens in the result.links structure
-      if (data?.result?.links) {
-        console.log('[UI DEBUG] Cursor tokens:', data.result.links);
-        console.log('[UI DEBUG] Next cursor is empty?', !data.result.links.next);
-        console.log('[UI DEBUG] Prev cursor is empty?', !data.result.links.prev || data.result.links.prev === '');
-        console.log('[UI DEBUG] Current navigation state:', navigationState);
-      } else {
-        console.log('[UI DEBUG] No cursor tokens found in response');
-      }
-    }
-  }, [data, navigationState]);
 
   const handleSearch = (params: CensysSearchParams) => {
     setSearchParams(prev => ({
@@ -65,7 +39,6 @@ const CensysSearch = () => {
       ...params,
       cursor: null, // Reset cursor when performing a new search
     }));
-    // Reset navigation state
     setNavigationState({
       direction: 'initial',
       pages: 0
@@ -73,79 +46,53 @@ const CensysSearch = () => {
   };
 
   const handleNextPage = () => {
-    // Use the next cursor from result.links
     if (data?.result?.links?.next) {
-      console.log('[UI DEBUG] Using next cursor:', data.result.links.next);
-      
-      // Extract cursor info for better page tracking
       const cursorInfo = extractCursorInfo(data.result.links.next);
-      console.log('[UI DEBUG] Next page cursor info:', cursorInfo);
-      
       setSearchParams(prev => ({
         ...prev,
         cursor: data.result.links.next,
       }));
-      
-      // Update navigation state, use cursor info if available
       setNavigationState(prev => ({
         direction: 'forward',
         pages: cursorInfo.page ? cursorInfo.page - 1 : prev.pages + 1
       }));
-    } else if (!searchParams.cursor && data?.result?.total > searchParams.per_page) {
-      // If we're on the first page and there's no next cursor but more results exist
-      console.log('[UI DEBUG] No next cursor available, performing new search');
+    } else if (!searchParams.cursor && data?.result?.total && data.result.total > (searchParams.per_page || 0)) {
       setSearchParams(prev => ({
         ...prev,
         cursor: null, // Explicitly set to null to ensure clean state
       }));
-    } else if (data?.result?.total <= searchParams.per_page) {
-      // If there's no next page to load, just return
-      console.log('[UI DEBUG] No more results to load');
+    } else if (data?.result?.total && data.result.total <= (searchParams.per_page || 0)) {
       return;
     }
   };
 
   const handlePrevPage = () => {
-    // Check if there's a prev cursor and it's not empty
     if (data?.result?.links?.prev && data.result.links.prev !== '') {
-      console.log('[UI DEBUG] Using prev cursor:', data.result.links.prev);
-      
-      // Extract cursor info to check what page we're going to
       const cursorInfo = extractCursorInfo(data.result.links.prev);
-      console.log('[UI DEBUG] Previous page cursor info:', cursorInfo);
-      
-      // If we're going to page 1, handle it as a reset
       if (cursorInfo.page === 1) {
-        console.log('[UI DEBUG] Going back to page 1, resetting cursor');
         setSearchParams(prev => ({
           ...prev,
           cursor: null,
         }));
-        // Reset navigation state
         setNavigationState({
           direction: 'initial',
           pages: 0
         });
       } else {
-        // Otherwise use the cursor normally
         setSearchParams(prev => ({
           ...prev,
           cursor: data.result.links.prev,
         }));
-        // Update navigation state
         setNavigationState(prev => ({
           direction: 'backward',
           pages: Math.max(0, prev.pages - 1)
         }));
       }
     } else {
-      // If the prev cursor is empty or doesn't exist, go back to the first page
-      console.log('[UI DEBUG] No valid prev cursor or going to first page');
       setSearchParams(prev => ({
         ...prev,
         cursor: null,
       }));
-      // Reset navigation state
       setNavigationState({
         direction: 'initial',
         pages: 0
@@ -164,7 +111,6 @@ const CensysSearch = () => {
       
       <SearchForm onSearch={handleSearch} initialParams={searchParams} />
       
-      {/* Loading state */}
       {isLoading && (
         <div className="flex items-center justify-center p-12 bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="flex flex-col items-center">
@@ -174,7 +120,6 @@ const CensysSearch = () => {
         </div>
       )}
       
-      {/* Error state */}
       {isError && !isLoading && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-r-md">
           <div className="flex">
@@ -190,7 +135,6 @@ const CensysSearch = () => {
               <div className="mt-2 text-sm text-red-700">
                 <p>{(error as Error)?.message || 'An unknown error occurred'}</p>
                 
-                {/* Add helpful suggestions based on common errors */}
                 <div className="mt-3 pt-3 border-t border-red-200">
                   <p className="font-medium">Helpful tips:</p>
                   <ul className="list-disc ml-5 mt-1 space-y-1">
@@ -212,13 +156,12 @@ const CensysSearch = () => {
         </div>
       )}
       
-      {/* Results */}
       {data && !isLoading && (
         <div className="mt-6 bg-white rounded-lg shadow p-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-white rounded-lg shadow-sm border border-slate-200">
             <div>
               <p className="text-slate-800 font-medium">
-                Found <span className="text-indigo-600 font-bold">{data.result.total.toLocaleString()}</span> hosts matching your query
+                Found <span className="text-indigo-600 font-bold">{data.result.total?.toLocaleString() || '0'}</span> hosts matching your query
               </p>
               <p className="text-sm text-slate-500 mt-1">
                 <span className="font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded">
@@ -227,7 +170,7 @@ const CensysSearch = () => {
               </p>
             </div>
             <div className="text-slate-600 text-sm mt-2 md:mt-0 flex flex-col items-end">
-              <div>Showing {data.result.hits.length} of {data.result.total.toLocaleString()} Total Results</div>
+              <div>Showing {data.result.hits?.length || 0} of {data.result.total?.toLocaleString() || '0'} Total Results</div>
               {navigationState.pages > 0 && (
                 <div className="text-slate-500 text-xs mt-1">
                   Page {navigationState.pages + 1} 
@@ -242,13 +185,10 @@ const CensysSearch = () => {
             </div>
           </div>
           
-          {/* Pagination controls */}
           <div className="flex justify-between my-4">
-            {/* Back to first page button */}
             {navigationState.pages > 0 && (
               <button 
                 onClick={() => {
-                  console.log('[UI DEBUG] Returning to first page');
                   setSearchParams(prev => ({
                     ...prev,
                     cursor: null,
@@ -297,7 +237,6 @@ const CensysSearch = () => {
             </button>
           </div>
           
-          {/* Results list */}
           <HostsList hosts={data.result.hits} />
         </div>
       )}

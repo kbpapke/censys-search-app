@@ -10,7 +10,6 @@ jest.mock('@/config/env', () => ({
     API_ID: 'test-api-id',
     SECRET_KEY: 'test-secret-key',
     hasCredentials: true,
-    usingFallbackCredentials: false
   }
 }));
 

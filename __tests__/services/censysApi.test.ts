@@ -8,7 +8,6 @@ jest.mock('@/config/env', () => ({
     API_ID: 'test-api-id',
     SECRET_KEY: 'test-secret-key',
     hasCredentials: true,
-    usingFallbackCredentials: false
   }
 }));
 
@@ -17,7 +16,7 @@ jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 // Mock axios.isAxiosError function
-(axios.isAxiosError as jest.Mock) = jest.fn().mockReturnValue(true);
+axios.isAxiosError = jest.fn().mockReturnValue(true);
 
 describe('censysApi', () => {
   beforeEach(() => {
@@ -46,7 +45,6 @@ describe('censysApi', () => {
     // Call the function
     await searchHosts({
       query: 'services.service_name: HTTP',
-      page: 1,
       per_page: 10,
       apiId: 'test-id',
       secretKey: 'test-key'
@@ -58,7 +56,6 @@ describe('censysApi', () => {
       expect.objectContaining({
         params: expect.objectContaining({
           q: 'services.service_name: HTTP',
-          page: 1,
           per_page: 10
         }),
         auth: {
